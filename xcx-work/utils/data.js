@@ -1,14 +1,10 @@
-const identities = [
-  { id: 'dealer', name: '经销商', en: 'DEALER', desc: '获取批发指导价与货源对接', icon: '货' },
-  { id: 'agent', name: '代理', en: 'AGENT', desc: '掌握区域价盘、返点与政策动向', icon: '协' },
-  { id: 'supplier', name: '供应商', en: 'SUPPLIER', desc: '高效对接搅拌站采购需求', icon: '供' },
-]
+const roleOptions = ['供应商', '制造商', '经销商', '代理商', '服务商']
 
-const presetAddresses = [
-  '郑州市经开区第八大街搅拌站',
-  '郑州市高新区科学大道商砼站',
-  '中牟县官渡工业园搅拌站',
-]
+const legacyRoleNames = {
+  dealer: '经销商',
+  agent: '代理商',
+  supplier: '供应商',
+}
 
 const stations = [
   { id: 's1', name: '豫砼商砼站', distance: 1.8, latitude: 34.7602, longitude: 113.6398, c30: 385, status: '产能充足', address: '经开区第八大街与经北三路交叉口' },
@@ -33,4 +29,4 @@ const notifications = [
   { id: 'n3', type: '活动通知', title: '备货季泵送费减免', desc: '9 月 10 日前下单，部分站点泵送费立减 5 元/方。', time: '09-05 09:00' },
 ]
 
-module.exports = { identities, presetAddresses, stations, quotes, notifications }
+module.exports = { roleOptions, legacyRoleNames, stations, quotes, notifications }

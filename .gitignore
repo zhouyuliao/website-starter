@@ -1,0 +1,19 @@
+# Local dependency caches and temporary browser-extension extraction.
+.pnpm-store/
+.extension-staging/
+
+# Node.js packages and local environment files.
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Build output and diagnostic logs.
+dist/
+coverage/
+*.log
+
+# Local build output and packaged handoff archives.
+_source/.next/
+_source/node_modules/
+*.zip

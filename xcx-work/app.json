@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/register/index",
+    "pages/home/index",
+    "pages/quotes/index",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#1b1917",
+    "backgroundColor": "#f2f1ed",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#746e67",
+    "selectedColor": "#ea580c",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/quotes/index", "text": "报价" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于匹配附近搅拌站和打开导航。"
+    }
+  },
+  "requiredPrivateInfos": ["getLocation"],
+  "sitemapLocation": "sitemap.json"
+}
