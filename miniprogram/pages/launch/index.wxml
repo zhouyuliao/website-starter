@@ -1,0 +1,23 @@
+<view class="page launch-page">
+  <view class="hero">
+    <image class="hero-image" src="/assets/hero-plant.png" mode="aspectFill" />
+    <view class="hero-mask"></view>
+    <view class="hero-copy">
+      <view class="brand-row"><text class="brand-tag">CONCRETE</text><text class="brand-en">PRICING ASSISTANT</text></view>
+      <view class="hero-title">搅拌站报价助手</view>
+    </view>
+  </view>
+  <view class="hazard"></view>
+  <view class="content">
+    <text class="intro">请选择您的身份，系统将为您提供匹配的报价服务与站点推荐。</text>
+    <view class="identity-list">
+      <button wx:for="{{identities}}" wx:key="id" class="identity-card {{selected === item.id ? 'identity-active' : ''}}" data-id="{{item.id}}" bindtap="selectIdentity">
+        <view class="identity-icon">{{item.icon}}</view>
+        <view class="identity-copy"><view><text class="identity-name">{{item.name}}</text><text class="identity-en">{{item.en}}</text></view><text class="identity-desc">{{item.desc}}</text></view>
+        <view class="radio {{selected === item.id ? 'radio-active' : ''}}">{{selected === item.id ? '✓' : ''}}</view>
+      </button>
+    </view>
+    <button class="next-button {{selected ? '' : 'next-disabled'}}" bindtap="next">{{selected ? '确认身份，进入注册' : '请先选择您的身份'}}</button>
+    <view class="agreement">继续即代表同意服务协议与隐私政策 · 演示版本</view>
+  </view>
+</view>
