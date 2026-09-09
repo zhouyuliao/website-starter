@@ -15,7 +15,7 @@ Environment=DB_HOST=127.0.0.1
 Environment=DB_PORT=5432
 Environment=DB_NAME=quote_app
 Environment=DB_USER=quote_app
-ExecStart=/bin/bash -lc 'export DB_PASSWORD="$POSTGRES_PASSWORD"; exec /home/ubuntu/.nvm/versions/node/v22.23.1/bin/node src/server.js'
+ExecStart=/bin/bash -lc 'export DB_PASSWORD="$POSTGRES_PASSWORD"; exec /usr/bin/node src/server.js'
 Restart=always
 RestartSec=3
 

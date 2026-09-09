@@ -1,40 +1,25 @@
 #!/usr/bin/env bash
 set -eu
 
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Run this script as root: curl ... | sudo bash" >&2
+  exit 1
+fi
+
 APP_DIR=/opt/quote-assistant
 REPO_URL=https://github.com/zhouyuliao/website-starter.git
-if [ "$(id -u)" -eq 0 ]; then
-  SUDO=
-else
-  SUDO=sudo
-fi
 
-$SUDO apt-get update
-$SUDO apt-get install -y docker.io git openssl curl
-
-if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE_PACKAGE=
-  for candidate in docker-compose-v2 docker-compose-plugin docker-compose; do
-    if apt-cache show "$candidate" >/dev/null 2>&1; then
-      COMPOSE_PACKAGE=$candidate
-      break
-    fi
-  done
-  if [ -z "$COMPOSE_PACKAGE" ]; then
-    echo "No Docker Compose package is available from the configured apt sources." >&2
-    exit 1
-  fi
-  $SUDO apt-get install -y "$COMPOSE_PACKAGE"
-fi
-
-$SUDO systemctl enable --now docker
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  ca-certificates curl git nodejs npm openssl postgresql
+systemctl enable --now postgresql
 
 if [ ! -d "$APP_DIR/.git" ]; then
-  $SUDO mkdir -p "$(dirname "$APP_DIR")"
-  $SUDO git clone "$REPO_URL" "$APP_DIR"
+  mkdir -p "$(dirname "$APP_DIR")"
+  git clone "$REPO_URL" "$APP_DIR"
 else
-  $SUDO git -C "$APP_DIR" fetch origin main
-  $SUDO git -C "$APP_DIR" reset --hard origin/main
+  git -C "$APP_DIR" fetch origin main
+  git -C "$APP_DIR" reset --hard origin/main
 fi
 
 cd "$APP_DIR"
@@ -47,10 +32,23 @@ CORS_ORIGIN=https://website-starter-beige.vercel.app
 EOF
 fi
 
-if docker compose version >/dev/null 2>&1; then
-  $SUDO docker compose up -d --build
-else
-  $SUDO docker-compose up -d --build
-fi
+DB_PASSWORD=$(sed -n 's/^POSTGRES_PASSWORD=//p' .env)
+runuser -u postgres -- psql -v ON_ERROR_STOP=1 -v app_password="$DB_PASSWORD" <<'SQL'
+SELECT format('CREATE ROLE quote_app LOGIN PASSWORD %L', :'app_password')
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'quote_app') \gexec
+ALTER ROLE quote_app PASSWORD :'app_password';
+SELECT 'CREATE DATABASE quote_app OWNER quote_app'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'quote_app') \gexec
+SQL
+
+npm install --omit=dev --prefix "$APP_DIR/server"
+install -m 644 "$APP_DIR/server/quote-assistant-api.service" \
+  /etc/systemd/system/quote-assistant-api.service
+chown root:ubuntu "$APP_DIR/.env"
+chmod 640 "$APP_DIR/.env"
+systemctl daemon-reload
+systemctl enable --now quote-assistant-api
+systemctl restart quote-assistant-api
+
 curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/healthz
 echo
