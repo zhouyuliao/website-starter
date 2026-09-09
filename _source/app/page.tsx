@@ -7,6 +7,7 @@ import { ProfileScreen } from '@/components/profile-screen'
 import { QuotesScreen } from '@/components/quotes-screen'
 import { RegisterScreen } from '@/components/register-screen'
 import { TabBar, type TabId } from '@/components/tab-bar'
+import { clearAuthToken, getCurrentUser, registerUser, updateCurrentUser } from '@/lib/api'
 import { identities, type IdentityId, type Profile } from '@/lib/data'
 
 type Stage = 'launch' | 'register' | 'main'
@@ -20,18 +21,28 @@ export default function Page() {
   const [tab, setTab] = useState<TabId>('home')
 
   useEffect(() => {
+    let active = true
+    void getCurrentUser().then((user) => {
+      if (!active || !user) return
+      setIdentityId(user.identityId)
+      setProfile({ name: user.name, phone: user.phone, address: user.address })
+      setStage('main')
+    })
+
     try {
       const saved = window.localStorage.getItem('concrete-profile')
-      if (!saved) return
-      const parsed = JSON.parse(saved) as { identityId?: IdentityId; profile?: Profile }
-      if (parsed.identityId && parsed.profile?.name && parsed.profile.phone && parsed.profile.address) {
-        setIdentityId(parsed.identityId)
-        setProfile(parsed.profile)
-        setStage('main')
+      if (saved) {
+        const parsed = JSON.parse(saved) as { identityId?: IdentityId; profile?: Profile }
+        if (parsed.identityId && parsed.profile?.name && parsed.profile.phone && parsed.profile.address) {
+          setIdentityId(parsed.identityId)
+          setProfile(parsed.profile)
+          setStage('main')
+        }
       }
     } catch {
       window.localStorage.removeItem('concrete-profile')
     }
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
@@ -47,6 +58,21 @@ export default function Page() {
     setProfile(emptyProfile)
     setTab('home')
     window.localStorage.removeItem('concrete-profile')
+    clearAuthToken()
+  }
+
+  const handleRegister = async (nextProfile: Profile, password: string) => {
+    if (!identityId) throw new Error('请选择您的身份')
+    const user = await registerUser({ identityId, ...nextProfile, password })
+    setIdentityId(user.identityId)
+    setProfile({ name: user.name, phone: user.phone, address: user.address })
+    setTab('home')
+    setStage('main')
+  }
+
+  const handleProfileSave = (nextProfile: Profile) => {
+    setProfile(nextProfile)
+    if (identityId) void updateCurrentUser({ identityId, profile: nextProfile })
   }
 
   return (
@@ -78,11 +104,7 @@ export default function Page() {
             identity={identity}
             initial={profile}
             onBack={() => setStage('launch')}
-            onDone={(p) => {
-              setProfile(p)
-              setTab('home')
-              setStage('main')
-            }}
+            onDone={handleRegister}
           />
         )}
 
@@ -96,7 +118,7 @@ export default function Page() {
               <ProfileScreen
                 profile={profile}
                 identity={identity}
-                onSave={setProfile}
+                onSave={handleProfileSave}
                 onNavigate={setTab}
                 onSwitchIdentity={() => setStage('launch')}
                 onLogout={handleLogout}

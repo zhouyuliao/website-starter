@@ -1,25 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, MapPin, PencilLine, Phone, User } from 'lucide-react'
+import { Check, KeyRound, MapPin, PencilLine, Phone, User } from 'lucide-react'
 import { presetAddresses, type Profile } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 interface ProfileFormProps {
   initial: Profile
   submitLabel: string
-  onSubmit: (profile: Profile) => void
+  passwordRequired?: boolean
+  onSubmit: (profile: Profile, password?: string) => void | Promise<void>
 }
 
 interface FormErrors {
   name?: string
   phone?: string
   address?: string
+  password?: string
+  confirmPassword?: string
 }
 
 const CUSTOM = '__custom__'
 
-export function ProfileForm({ initial, submitLabel, onSubmit }: ProfileFormProps) {
+export function ProfileForm({ initial, submitLabel, passwordRequired = false, onSubmit }: ProfileFormProps) {
   const isPreset = presetAddresses.includes(initial.address)
   const [name, setName] = useState(initial.name)
   const [phone, setPhone] = useState(initial.phone)
@@ -27,6 +30,8 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: ProfileFormProps
     initial.address ? (isPreset ? initial.address : CUSTOM) : ''
   )
   const [customAddress, setCustomAddress] = useState(isPreset ? '' : initial.address)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
 
   const handleSubmit = () => {
@@ -34,10 +39,12 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: ProfileFormProps
     const next: FormErrors = {}
     if (!name.trim()) next.name = '请输入联系人姓名'
     if (!/^1[3-9]\d{9}$/.test(phone)) next.phone = '请输入正确的 11 位手机号码'
+    if (passwordRequired && password.length < 8) next.password = '密码至少需要 8 位'
+    if (passwordRequired && password !== confirmPassword) next.confirmPassword = '两次输入的密码不一致'
     if (!address) next.address = '请选择或填写搅拌站地址'
     setErrors(next)
     if (Object.keys(next).length > 0) return
-    onSubmit({ name: name.trim(), phone, address })
+    void onSubmit({ name: name.trim(), phone, address }, password)
   }
 
   return (
@@ -96,6 +103,50 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: ProfileFormProps
         </div>
         {errors.phone && <p className="mt-1 text-[11px] text-destructive">{errors.phone}</p>}
       </div>
+
+      {passwordRequired && (
+        <>
+          <div>
+            <label htmlFor="pf-password" className="mb-1.5 block text-xs font-bold">
+              设置密码 <span className="text-safety">*</span>
+            </label>
+            <div className={cn('flex items-center gap-2 border bg-card px-3 transition-colors focus-within:border-safety', errors.password ? 'border-destructive' : 'border-border')}>
+              <KeyRound className="size-4 shrink-0 text-muted-foreground" />
+              <input
+                id="pf-password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="至少 8 位密码"
+                maxLength={72}
+                className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+              />
+            </div>
+            {errors.password && <p className="mt-1 text-[11px] text-destructive">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="pf-confirm-password" className="mb-1.5 block text-xs font-bold">
+              确认密码 <span className="text-safety">*</span>
+            </label>
+            <div className={cn('flex items-center gap-2 border bg-card px-3 transition-colors focus-within:border-safety', errors.confirmPassword ? 'border-destructive' : 'border-border')}>
+              <KeyRound className="size-4 shrink-0 text-muted-foreground" />
+              <input
+                id="pf-confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="再次输入密码"
+                maxLength={72}
+                className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+              />
+            </div>
+            {errors.confirmPassword && <p className="mt-1 text-[11px] text-destructive">{errors.confirmPassword}</p>}
+          </div>
+        </>
+      )}
 
       {/* 搅拌站地址 */}
       <div>

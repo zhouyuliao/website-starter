@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import type { Identity, Profile } from '@/lib/data'
 import { ProfileForm } from './profile-form'
@@ -9,10 +10,21 @@ interface RegisterScreenProps {
   identity: Identity
   initial: Profile
   onBack: () => void
-  onDone: (profile: Profile) => void
+  onDone: (profile: Profile, password: string) => Promise<void> | void
 }
 
 export function RegisterScreen({ identity, initial, onBack, onDone }: RegisterScreenProps) {
+  const [error, setError] = useState('')
+
+  const handleDone = async (profile: Profile, password?: string) => {
+    setError('')
+    try {
+      await onDone(profile, password || '')
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '注册失败，请稍后重试')
+    }
+  }
+
   return (
     <div className="animate-screen-in no-scrollbar flex h-full flex-col overflow-y-auto bg-background">
       <StatusBar />
@@ -67,7 +79,17 @@ export function RegisterScreen({ identity, initial, onBack, onDone }: RegisterSc
         <p className="mb-5 mt-1 text-xs leading-relaxed text-muted-foreground">
           请填写以下信息以便我们为您提供更好的服务，信息仅用于报价对接与站点匹配。
         </p>
-        <ProfileForm initial={initial} submitLabel="完成注册，进入首页" onSubmit={onDone} />
+        <ProfileForm
+          initial={initial}
+          submitLabel="完成注册，进入首页"
+          passwordRequired
+          onSubmit={handleDone}
+        />
+        {error && (
+          <p role="alert" className="mt-3 border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )
