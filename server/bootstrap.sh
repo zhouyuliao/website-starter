@@ -9,11 +9,25 @@ else
   SUDO=sudo
 fi
 
-if ! command -v docker >/dev/null 2>&1; then
-  $SUDO apt-get update
-  $SUDO apt-get install -y docker.io docker-compose-plugin git openssl curl
-  $SUDO systemctl enable --now docker
+$SUDO apt-get update
+$SUDO apt-get install -y docker.io git openssl curl
+
+if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_PACKAGE=
+  for candidate in docker-compose-v2 docker-compose-plugin docker-compose; do
+    if apt-cache show "$candidate" >/dev/null 2>&1; then
+      COMPOSE_PACKAGE=$candidate
+      break
+    fi
+  done
+  if [ -z "$COMPOSE_PACKAGE" ]; then
+    echo "No Docker Compose package is available from the configured apt sources." >&2
+    exit 1
+  fi
+  $SUDO apt-get install -y "$COMPOSE_PACKAGE"
 fi
+
+$SUDO systemctl enable --now docker
 
 if [ ! -d "$APP_DIR/.git" ]; then
   $SUDO mkdir -p "$(dirname "$APP_DIR")"
@@ -33,6 +47,10 @@ CORS_ORIGIN=https://website-starter-beige.vercel.app
 EOF
 fi
 
-$SUDO docker compose up -d --build
+if docker compose version >/dev/null 2>&1; then
+  $SUDO docker compose up -d --build
+else
+  $SUDO docker-compose up -d --build
+fi
 curl --fail --retry 10 --retry-delay 2 http://127.0.0.1:3001/healthz
 echo
