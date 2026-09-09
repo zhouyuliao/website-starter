@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const apiServerUrl = process.env.API_SERVER_URL || 'http://127.0.0.1:3001'
+const apiServerUrl = process.env.API_SERVER_URL || 'http://81.71.157.222:3001'
 
 const nextConfig = {
   images: {
