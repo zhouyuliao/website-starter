@@ -5,7 +5,7 @@
 ```bash
 cp server/.env.example .env
 openssl rand -hex 32
-docker compose up -d --build
+sudo -v && curl -fsSL https://raw.githubusercontent.com/zhouyuliao/website-starter/main/server/bootstrap.sh | sudo bash
 curl http://127.0.0.1:3001/healthz
 ```
 
