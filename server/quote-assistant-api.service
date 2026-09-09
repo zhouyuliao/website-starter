@@ -1,0 +1,23 @@
+[Unit]
+Description=Quote Assistant API
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/quote-assistant/server
+EnvironmentFile=/opt/quote-assistant/.env
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=DB_HOST=127.0.0.1
+Environment=DB_PORT=5432
+Environment=DB_NAME=quote_app
+Environment=DB_USER=quote_app
+ExecStart=/bin/bash -lc 'export DB_PASSWORD="$POSTGRES_PASSWORD"; exec /home/ubuntu/.nvm/versions/node/v22.23.1/bin/node src/server.js'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
